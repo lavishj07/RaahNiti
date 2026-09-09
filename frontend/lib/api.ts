@@ -3,11 +3,15 @@ import {
   KMPResult, KnapsackResult, GrahamScanResult, FloydWarshallResult, EdmondsKarpResult
 } from '@/types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+// In browser production on Vercel, empty string '' means same-origin relative fetch (/api/*)
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL !== undefined
+  ? process.env.NEXT_PUBLIC_API_URL
+  : (typeof window !== 'undefined' ? '' : 'http://127.0.0.1:8000');
 
 async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
   try {
-    const res = await fetch(`${API_BASE_URL}${url}`, {
+    const fullUrl = `${API_BASE_URL}${url}`;
+    const res = await fetch(fullUrl, {
       headers: { 'Content-Type': 'application/json' },
       ...options,
     });
