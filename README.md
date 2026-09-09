@@ -173,6 +173,6 @@ cd frontend && npm run build
 
 ---
 
-## 9. Git Safety Confirmation
+## 9. Further improvements : 
 
-> **Explicit Confirmation**: No GitHub repository, remote branch, pull request, or remote files were modified during this development process. All changes remain strictly on your local machine.
+> I would love to integrate hardware components into this project, so that we can get as close as possible to its real world applications. That is precisely the next thing i am planning to do. Besides this, I would also like to give a final touch up to the frontend to make it better, but that is more of a luxury rather than a necessity, so as usual i will procastinate.
