@@ -1,6 +1,6 @@
 # RaahNiti — Intelligent Route & Fleet Optimization
 
-> **Tagline**: Visual Algorithmic Logistics Intelligence Platform
+> Visual Algorithmic Logistics Intelligence Platform
 
 RaahNiti is an interactive, map-based logistics intelligence dashboard and fleet management platform engineered for delivery fleet dispatchers and logistics operations managers. Rather than hiding complex algorithms behind static UI buttons, RaahNiti enables users to **see real-world Data Structures and Algorithms (DSA) executing in real-time** across dynamic interactive maps, state matrices, and live vehicle playback simulations.
 
@@ -150,33 +150,26 @@ cd frontend && npm run build
 
 ---
 
-## 7. Deployment to Vercel
+## 7. Check it out yourself
 
-RaahNiti is architected for single-repository Vercel deployment:
-1. Push repository to your private GitHub/Vercel project.
-2. Ensure `vercel.json` is located in the root directory.
-3. Configure Environment Variables in Vercel Dashboard:
-   - `NEXT_PUBLIC_API_URL` -> `/api`
-4. Deploy! Next.js will serve the UI and `api/index.py` will run FastAPI serverless endpoints.
 
----
 
-## 8. Interview / Viva Talking Points
+## 8. Fundamental Decision logics :
 
-### Q1: Why KMP over standard string `.includes()` search?
-> **Answer**: Standard naive search takes $O(N \cdot M)$ worst-case time because it backtracks pattern matching upon every mismatch. KMP computes an $O(M)$ LPS table that dictates the exact pattern index to resume matching, guaranteeing $O(N + M)$ total time regardless of repetitive text structures.
+### 1: Choosing KMP over standard string `.includes()` search?
+> **Reasoning**: Standard naive search takes $O(N \cdot M)$ worst-case time because it backtracks pattern matching upon every mismatch. KMP computes an $O(M)$ LPS table that dictates the exact pattern index to resume matching, guaranteeing $O(N + M)$ total time regardless of repetitive text structures.
 
-### Q2: Why 0/1 Knapsack over Fractional Knapsack?
-> **Answer**: Fractional Knapsack assumes cargo items can be split into arbitrary fractional quantities (solved greedily in $O(N \log N)$). In real-world logistics, delivery packages are indivisible 0/1 entities—a box cannot be half-delivered. Thus, 0/1 Dynamic Programming is mathematically required.
+### 2: Choosing 0/1 Knapsack over Fractional Knapsack?
+> **Reasoning**: Fractional Knapsack assumes cargo items can be split into arbitrary fractional quantities (solved greedily in $O(N \log N)$). In real-world logistics, delivery packages are indivisible 0/1 entities—a box cannot be half-delivered. Thus, 0/1 Dynamic Programming is mathematically required.
 
-### Q3: Why Graham's Scan for delivery zoning?
-> **Answer**: Graham's Scan computes the exact minimal convex hull enclosure of 2D coordinates in $O(N \log N)$ time by polar angle sorting and stack cross-product turn checking. It guarantees zero boundary overlap and optimal convex perimeter geometry for fleet dispatchers.
+### 3: Choosing Graham's Scan for delivery zoning?
+> **Reasoning**: Graham's Scan computes the exact minimal convex hull enclosure of 2D coordinates in $O(N \log N)$ time by polar angle sorting and stack cross-product turn checking. It guarantees zero boundary overlap and optimal convex perimeter geometry for fleet dispatchers.
 
-### Q4: Why Floyd-Warshall instead of running Dijkstra multiple times?
-> **Answer**: Floyd-Warshall operates directly on adjacency matrices with simple triple nested loops $O(V^3)$, which is extremely cache-friendly and easy to snapshot for all-pairs distance matrices. Running Dijkstra $V$ times with min-heaps takes $O(V \cdot E \log V)$, which becomes more complex for dense all-pairs road network matrix precomputation.
+### 4: Choosing Floyd-Warshall instead of running Dijkstra multiple times?
+> **Reasoning**: Floyd-Warshall operates directly on adjacency matrices with simple triple nested loops $O(V^3)$, which is extremely cache-friendly and easy to snapshot for all-pairs distance matrices. Running Dijkstra $V$ times with min-heaps takes $O(V \cdot E \log V)$, which becomes more complex for dense all-pairs road network matrix precomputation.
 
-### Q5: Why Edmonds-Karp for road network capacity analysis?
-> **Answer**: Edmonds-Karp guarantees that Ford-Fulkerson terminates in $O(V \cdot E^2)$ by selecting the shortest augmenting path in terms of edge count using BFS. This prevents infinite loops or pseudo-polynomial iterations on irrational capacities and pinpoints exact saturated bottleneck road edges.
+### 5: Choosing Edmonds-Karp for road network capacity analysis?
+> **Reasoning**: Edmonds-Karp guarantees that Ford-Fulkerson terminates in $O(V \cdot E^2)$ by selecting the shortest augmenting path in terms of edge count using BFS. This prevents infinite loops or pseudo-polynomial iterations on irrational capacities and pinpoints exact saturated bottleneck road edges.
 
 ---
 
