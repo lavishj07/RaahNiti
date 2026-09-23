@@ -6,6 +6,7 @@ from app.database.connection import engine, Base, SessionLocal
 from app.database.seed_data import seed_database
 from app.api.data_router import router as data_router
 from app.api.algorithms_router import router as algorithms_router
+from app.api.recommendations_router import router as recommendations_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -36,6 +37,7 @@ app.add_middleware(
 
 app.include_router(data_router)
 app.include_router(algorithms_router)
+app.include_router(recommendations_router)
 
 @app.get("/")
 def root():

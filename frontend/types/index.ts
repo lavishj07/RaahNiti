@@ -72,11 +72,43 @@ export interface DashboardStats {
   active_deliveries: number;
   active_vehicles: number;
   pending_packages: number;
+  delivered_packages: number;
+  delayed_vehicles: number;
   total_customers: number;
   fleet_utilization_pct: number;
   network_bottlenecks_detected: number;
   average_delivery_eta_mins: number;
   total_optimized_distance_km: number;
+  total_value_delivered_usd: number;
+}
+
+export interface RecommendationTask {
+  id: string;
+  algo: string;
+  algo_tag: string;
+  algo_color: 'cyan' | 'emerald' | 'purple' | 'amber' | 'rose' | 'orange';
+  priority: number;
+  urgency: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+  title: string;
+  description: string;
+  action: string;
+  impact: string;
+  metric: string;
+}
+
+export interface RecommendationsResult {
+  total_tasks: number;
+  critical_tasks: number;
+  high_tasks: number;
+  summary: {
+    pending_packages: number;
+    idle_vehicles: number;
+    active_vehicles: number;
+    delayed_vehicles: number;
+    fleet_efficiency_score: number;
+  };
+  tasks: RecommendationTask[];
+  generated_by: string[];
 }
 
 // Algorithm Interfaces

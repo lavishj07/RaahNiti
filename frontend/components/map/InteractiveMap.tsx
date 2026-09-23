@@ -72,8 +72,8 @@ export default function InteractiveMap({
 
   // Prepare Hull Polygon coordinates for Graham's Scan mode
   const hullCoords: [number, number][] = hullPoints.map((p) => [
-    p.lat !== undefined ? p.lat : p.y,
-    p.lng !== undefined ? p.lng : p.x,
+    p.latitude !== undefined ? p.latitude : (p.lat !== undefined ? p.lat : p.y),
+    p.longitude !== undefined ? p.longitude : (p.lng !== undefined ? p.lng : p.x),
   ]);
 
   // Map node IDs to Lat/Lng for quick polyline rendering

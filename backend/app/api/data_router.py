@@ -66,6 +66,8 @@ def get_dashboard_stats(db: Session = Depends(get_db)):
     active_deliveries = db.query(Package).filter(Package.status == "LOADED").count()
     active_vehicles = db.query(Vehicle).filter(Vehicle.status == "ACTIVE").count()
     pending_packages = db.query(Package).filter(Package.status == "PENDING").count()
+    delivered_packages = db.query(Package).filter(Package.status == "DELIVERED").count()
+    delayed_vehicles = db.query(Vehicle).filter(Vehicle.status == "DELAYED").count()
     total_customers = db.query(Customer).count()
     
     vehicles = db.query(Vehicle).all()
@@ -73,13 +75,19 @@ def get_dashboard_stats(db: Session = Depends(get_db)):
     total_current_load = sum(v.current_load_kg for v in vehicles)
     fleet_utilization = round((total_current_load / total_capacity * 100), 1) if total_capacity > 0 else 0
 
+    delivered_pkgs = db.query(Package).filter(Package.status == "DELIVERED").all()
+    total_value_delivered = sum(p.value_usd for p in delivered_pkgs)
+
     return {
         "active_deliveries": active_deliveries,
         "active_vehicles": active_vehicles,
         "pending_packages": pending_packages,
+        "delivered_packages": delivered_packages,
+        "delayed_vehicles": delayed_vehicles,
         "total_customers": total_customers,
         "fleet_utilization_pct": fleet_utilization,
         "network_bottlenecks_detected": 1,
         "average_delivery_eta_mins": 34,
-        "total_optimized_distance_km": 142.8
+        "total_optimized_distance_km": 174.6,
+        "total_value_delivered_usd": round(total_value_delivered, 2),
     }

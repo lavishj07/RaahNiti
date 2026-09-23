@@ -1,6 +1,7 @@
 import {
   Warehouse, Customer, PackageItem, Vehicle, GraphNode, GraphEdge, Zone, DashboardStats,
-  KMPResult, KnapsackResult, GrahamScanResult, FloydWarshallResult, EdmondsKarpResult
+  KMPResult, KnapsackResult, GrahamScanResult, FloydWarshallResult, EdmondsKarpResult,
+  RecommendationsResult
 } from '@/types';
 
 // In browser production on Vercel, empty string '' means same-origin relative fetch (/api/*)
@@ -65,4 +66,7 @@ export const apiService = {
       method: 'POST',
       body: JSON.stringify({ source_id: sourceId, sink_id: sinkId }),
     }),
+
+  getRecommendations: () =>
+    fetchJson<RecommendationsResult>('/api/recommendations'),
 };

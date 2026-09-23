@@ -4,11 +4,12 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
-  LayoutDashboard, Cpu, PackageCheck, MapPin, Network, Truck, FileText
+  LayoutDashboard, Cpu, PackageCheck, MapPin, Network, Truck, Star
 } from 'lucide-react';
 
 const navItems = [
   { name: 'Command Center', href: '/', icon: LayoutDashboard },
+  { name: 'Recommendations', href: '/recommendations', icon: Star, badge: 'AI' },
   { name: 'Algorithm Lab', href: '/algorithm-lab', icon: Cpu, badge: '5 DSA' },
   { name: 'Cargo Optimization', href: '/cargo', icon: PackageCheck, badge: 'Knapsack' },
   { name: 'Delivery Zones', href: '/zones', icon: MapPin, badge: 'Graham' },
