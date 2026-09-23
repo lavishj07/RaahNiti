@@ -19,6 +19,10 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
+  const [hullPoints, setHullPoints] = useState<any[]>([]);
+  const [shortestPathNodes, setShortestPathNodes] = useState<string[]>([]);
+  const [flowEdges, setFlowEdges] = useState<any[]>([]);
+
   useEffect(() => {
     async function loadData() {
       try {
@@ -46,6 +50,44 @@ export default function DashboardPage() {
     }
     loadData();
   }, []);
+
+  useEffect(() => {
+    async function fetchModeData() {
+      if (mapMode === 'zone' && hullPoints.length === 0 && customers.length > 0) {
+        try {
+          const pts = customers.map((c: any) => ({
+            id: c.id,
+            name: c.name,
+            x: c.longitude,
+            y: c.latitude
+          }));
+          const res = await apiService.runGrahamScan(pts);
+          if (res && res.hull_points) setHullPoints(res.hull_points);
+        } catch (e) {
+          console.error('Error fetching Graham Scan:', e);
+        }
+      } else if (mapMode === 'shortest-path' && shortestPathNodes.length === 0) {
+        try {
+          const res = await apiService.runFloydWarshall('W1', 'HUB_SOUTH');
+          if (res && res.selected_shortest_path && res.selected_shortest_path.path) {
+            setShortestPathNodes(res.selected_shortest_path.path);
+          }
+        } catch (e) {
+          console.error('Error fetching shortest path:', e);
+        }
+      } else if (mapMode === 'flow' && flowEdges.length === 0) {
+        try {
+          const res = await apiService.runEdmondsKarp('W1', 'HUB_SOUTH');
+          if (res && res.edges) {
+            setFlowEdges(res.edges);
+          }
+        } catch (e) {
+          console.error('Error fetching max flow:', e);
+        }
+      }
+    }
+    fetchModeData();
+  }, [mapMode, customers, hullPoints.length, shortestPathNodes.length, flowEdges.length]);
 
   return (
     <div className="space-y-6">
@@ -100,6 +142,9 @@ export default function DashboardPage() {
             nodes={nodes}
             edges={edges}
             zones={zones}
+            hullPoints={hullPoints}
+            shortestPathNodes={shortestPathNodes}
+            flowEdges={flowEdges}
             onSelectCustomer={(c) => setSelectedCustomer(c)}
           />
         </div>
