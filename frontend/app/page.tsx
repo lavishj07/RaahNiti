@@ -1,27 +1,54 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import MapWrapper from '@/components/map/MapWrapper';
 import { KpiGrid } from '@/components/kpi/KpiGrid';
 import { RoutePlayback } from '@/components/simulation/RoutePlayback';
 import { apiService } from '@/lib/api';
 import { Warehouse, Customer, Vehicle, GraphNode, GraphEdge, Zone, DashboardStats } from '@/types';
-import { Layers, MapPin, Search, Cpu } from 'lucide-react';
+import { MapPin, Search } from 'lucide-react';
+import { useKmpSearch } from '@/components/layout/SearchProvider';
+import {
+  DEMO_WAREHOUSE, DEMO_CUSTOMERS, DEMO_VEHICLES, DEMO_NODES, DEMO_EDGES, DEMO_ZONES,
+} from '@/lib/demoData';
+import { buildZoneHulls, computeMaxFlowEdges, shortestPathIds } from '@/lib/mapLayers';
+
+type MapMode = 'normal' | 'zone' | 'network' | 'flow' | 'shortest-path';
+
+const MODE_COPY: Record<MapMode, { title: string; body: string }> = {
+  normal: {
+    title: 'Live operations',
+    body: 'Customers and vehicles on the Delhi NCR basemap. Click a marker to inspect telemetry.',
+  },
+  zone: {
+    title: 'Convex delivery zones',
+    body: 'Graham’s Scan builds a convex hull per zone so cluster boundaries are visible as filled polygons.',
+  },
+  network: {
+    title: 'Road graph',
+    body: 'Intersections as nodes and highways as indigo edges — the graph used by shortest-path and max-flow.',
+  },
+  flow: {
+    title: 'Max flow / bottlenecks',
+    body: 'Edmonds-Karp from warehouse (W1) to Okhla hub. Red edges are saturated capacity bottlenecks.',
+  },
+  'shortest-path': {
+    title: 'Shortest path',
+    body: 'Floyd/Dijkstra path W1 → HUB_SOUTH in amber; unused roads stay dashed and dimmed.',
+  },
+};
 
 export default function DashboardPage() {
-  const [mapMode, setMapMode] = useState<'normal' | 'zone' | 'network' | 'flow' | 'shortest-path'>('normal');
-  const [warehouse, setWarehouse] = useState<Warehouse | null>(null);
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  const [nodes, setNodes] = useState<GraphNode[]>([]);
-  const [edges, setEdges] = useState<GraphEdge[]>([]);
-  const [zones, setZones] = useState<Zone[]>([]);
+  const [mapMode, setMapMode] = useState<MapMode>('normal');
+  const [warehouse, setWarehouse] = useState<Warehouse | null>(DEMO_WAREHOUSE);
+  const [customers, setCustomers] = useState<Customer[]>(DEMO_CUSTOMERS);
+  const [vehicles, setVehicles] = useState<Vehicle[]>(DEMO_VEHICLES);
+  const [nodes, setNodes] = useState<GraphNode[]>(DEMO_NODES);
+  const [edges, setEdges] = useState<GraphEdge[]>(DEMO_EDGES);
+  const [zones, setZones] = useState<Zone[]>(DEMO_ZONES);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-
-  const [hullPoints, setHullPoints] = useState<any[]>([]);
-  const [shortestPathNodes, setShortestPathNodes] = useState<string[]>([]);
-  const [flowEdges, setFlowEdges] = useState<any[]>([]);
+  const { highlightedCustomerIds } = useKmpSearch();
 
   useEffect(() => {
     async function loadData() {
@@ -35,14 +62,14 @@ export default function DashboardPage() {
           apiService.getStats(),
         ]);
 
-        if (whRes.status === 'fulfilled') setWarehouse(whRes.value);
-        if (custRes.status === 'fulfilled') setCustomers(custRes.value);
-        if (vehRes.status === 'fulfilled') setVehicles(vehRes.value);
-        if (netRes.status === 'fulfilled') {
+        if (whRes.status === 'fulfilled' && whRes.value) setWarehouse(whRes.value);
+        if (custRes.status === 'fulfilled' && custRes.value?.length) setCustomers(custRes.value);
+        if (vehRes.status === 'fulfilled' && vehRes.value?.length) setVehicles(vehRes.value);
+        if (netRes.status === 'fulfilled' && netRes.value?.nodes?.length) {
           setNodes(netRes.value.nodes);
           setEdges(netRes.value.edges);
         }
-        if (zoneRes.status === 'fulfilled') setZones(zoneRes.value);
+        if (zoneRes.status === 'fulfilled' && zoneRes.value?.length) setZones(zoneRes.value);
         if (statsRes.status === 'fulfilled') setStats(statsRes.value);
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
@@ -51,47 +78,18 @@ export default function DashboardPage() {
     loadData();
   }, []);
 
-  useEffect(() => {
-    async function fetchModeData() {
-      if (mapMode === 'zone' && hullPoints.length === 0 && customers.length > 0) {
-        try {
-          const pts = customers.map((c: any) => ({
-            id: c.id,
-            name: c.name,
-            x: c.longitude,
-            y: c.latitude
-          }));
-          const res = await apiService.runGrahamScan(pts);
-          if (res && res.hull_points) setHullPoints(res.hull_points);
-        } catch (e) {
-          console.error('Error fetching Graham Scan:', e);
-        }
-      } else if (mapMode === 'shortest-path' && shortestPathNodes.length === 0) {
-        try {
-          const res = await apiService.runFloydWarshall('W1', 'HUB_SOUTH');
-          if (res && res.selected_shortest_path && res.selected_shortest_path.path) {
-            setShortestPathNodes(res.selected_shortest_path.path);
-          }
-        } catch (e) {
-          console.error('Error fetching shortest path:', e);
-        }
-      } else if (mapMode === 'flow' && flowEdges.length === 0) {
-        try {
-          const res = await apiService.runEdmondsKarp('W1', 'HUB_SOUTH');
-          if (res && res.edges) {
-            setFlowEdges(res.edges);
-          }
-        } catch (e) {
-          console.error('Error fetching max flow:', e);
-        }
-      }
-    }
-    fetchModeData();
-  }, [mapMode, customers, hullPoints.length, shortestPathNodes.length, flowEdges.length]);
+  const zoneHulls = useMemo(() => buildZoneHulls(customers, zones), [customers, zones]);
+  const shortestPathNodes = useMemo(
+    () => shortestPathIds(nodes, edges, 'W1', 'HUB_SOUTH'),
+    [nodes, edges]
+  );
+  const flowEdges = useMemo(
+    () => computeMaxFlowEdges(nodes, edges, 'W1', 'HUB_SOUTH'),
+    [nodes, edges]
+  );
 
   return (
     <div className="space-y-6">
-      {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-extrabold tracking-tight text-white flex items-center gap-2 font-mono">
@@ -100,22 +98,23 @@ export default function DashboardPage() {
               Live Fleet Intelligence
             </span>
           </h2>
-          <p className="text-xs text-slate-400 font-mono">Real-time route planning, dynamic zoning, and graph capacity monitoring</p>
+          <p className="text-xs text-slate-400 font-mono">
+            {MODE_COPY[mapMode].title} — {MODE_COPY[mapMode].body}
+          </p>
         </div>
 
-        {/* Map Layer Mode Switcher */}
         <div className="flex items-center space-x-1.5 p-1.5 rounded-xl bg-slate-900 border border-slate-800 font-mono text-xs overflow-x-auto">
           {[
-            { id: 'normal', label: 'Normal Map' },
-            { id: 'zone', label: 'Convex Zones' },
-            { id: 'network', label: 'Road Graph' },
-            { id: 'flow', label: 'Max Flow' },
-            { id: 'shortest-path', label: 'Shortest Path' },
+            { id: 'normal' as const, label: 'Normal Map' },
+            { id: 'zone' as const, label: 'Convex Zones' },
+            { id: 'network' as const, label: 'Road Graph' },
+            { id: 'flow' as const, label: 'Max Flow' },
+            { id: 'shortest-path' as const, label: 'Shortest Path' },
           ].map((mode) => (
             <button
               key={mode.id}
-              onClick={() => setMapMode(mode.id as any)}
-              className={`px-3 py-1.5 rounded-lg transition-all font-medium ${
+              onClick={() => setMapMode(mode.id)}
+              className={`px-3 py-1.5 rounded-lg transition-all font-medium whitespace-nowrap ${
                 mapMode === mode.id
                   ? 'bg-cyan-500 text-slate-950 font-bold shadow-md shadow-cyan-500/20'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
@@ -127,12 +126,9 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* KPI Cards Row */}
       <KpiGrid stats={stats} />
 
-      {/* Main Grid: Interactive Map & Side Details */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Map Centerpiece (Spans 3 Columns) */}
         <div className="lg:col-span-3 min-h-[520px] rounded-2xl overflow-hidden border border-slate-800 shadow-2xl relative">
           <MapWrapper
             mode={mapMode}
@@ -142,14 +138,14 @@ export default function DashboardPage() {
             nodes={nodes}
             edges={edges}
             zones={zones}
-            hullPoints={hullPoints}
+            zoneHulls={zoneHulls}
             shortestPathNodes={shortestPathNodes}
             flowEdges={flowEdges}
+            highlightedCustomerIds={highlightedCustomerIds}
             onSelectCustomer={(c) => setSelectedCustomer(c)}
           />
         </div>
 
-        {/* Customer Detail Inspector Panel */}
         <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 backdrop-blur-md space-y-4 font-mono">
           <div className="flex items-center space-x-2 border-b border-slate-800 pb-3">
             <MapPin className="w-5 h-5 text-cyan-400" />
@@ -191,7 +187,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Route Simulation Player */}
       <RoutePlayback />
     </div>
   );

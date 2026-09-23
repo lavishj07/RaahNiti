@@ -30,6 +30,8 @@ def edmonds_karp(nodes: List[Dict[str, Any]], edges: List[Dict[str, Any]], sourc
             u = id_to_idx[u_id]
             v = id_to_idx[v_id]
             capacity[u][v] += cap
+            if edge.get("bidirectional", True):
+                capacity[v][u] += cap
             edge_map[(u_id, v_id)] = edge
 
     s = id_to_idx[source_id]

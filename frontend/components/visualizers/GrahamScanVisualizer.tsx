@@ -145,7 +145,7 @@ export const GrahamScanVisualizer: React.FC = () => {
           <MapWrapper
             mode="zone"
             customers={selectedCustomers}
-            hullPoints={hull}
+            zoneHulls={[{ id: 'custom', name: 'Custom Hull', color: '#06B6D4', positions: hull.map(h => [h.latitude, h.longitude]) }]}
           />
         </div>
 

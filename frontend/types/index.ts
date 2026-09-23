@@ -123,6 +123,13 @@ export interface KMPResult {
   time_complexity: string;
   space_complexity: string;
   matching_customers?: any[];
+  matching_packages?: any[];
+  matching_vehicles?: any[];
+  matching_zones?: any[];
+  total_customers_scanned?: number;
+  total_records_scanned?: number;
+  total_comparisons_all_customers?: number;
+  hit_count?: number;
   algorithm_info?: any;
 }
 

@@ -6,12 +6,12 @@ import MapWrapper from '@/components/map/MapWrapper';
 import { GraphNode } from '@/types';
 
 const mockFlowEdges = [
-  { source: 'W1', target: 'N01', road_name: 'NH-48 Dwarka Expressway', capacity: 2500, flow: 1500, residual: 1000, is_saturated: false },
-  { source: 'W1', target: 'N03', road_name: 'Outer Ring Road North', capacity: 1800, flow: 1100, residual: 700, is_saturated: false },
-  { source: 'W1', target: 'N04', road_name: 'Gurugram Link Road', capacity: 2200, flow: 800, residual: 1400, is_saturated: false },
-  { source: 'N01', target: 'N02', road_name: 'Ring Road South', capacity: 1500, flow: 1500, residual: 0, is_saturated: true },
-  { source: 'N02', target: 'HUB_SOUTH', road_name: 'Okhla Estate Road', capacity: 1600, flow: 1600, residual: 0, is_saturated: true },
-  { source: 'N08', target: 'HUB_SOUTH', road_name: 'Mathura Road Bottleneck', capacity: 800, flow: 800, residual: 0, is_saturated: true },
+  { source: 'W1', target: 'N01', road_name: 'NH-48 Dwarka Expressway', capacity: 2500, flow: 1500, residual: 1000, is_saturated: false, utilization_pct: 60 },
+  { source: 'W1', target: 'N03', road_name: 'Outer Ring Road North', capacity: 1800, flow: 1100, residual: 700, is_saturated: false, utilization_pct: 61 },
+  { source: 'W1', target: 'N04', road_name: 'Gurugram Link Road', capacity: 2200, flow: 800, residual: 1400, is_saturated: false, utilization_pct: 36 },
+  { source: 'N01', target: 'N02', road_name: 'Ring Road South', capacity: 1500, flow: 1500, residual: 0, is_saturated: true, utilization_pct: 100 },
+  { source: 'N02', target: 'HUB_SOUTH', road_name: 'Okhla Estate Road', capacity: 1600, flow: 1600, residual: 0, is_saturated: true, utilization_pct: 100 },
+  { source: 'N08', target: 'HUB_SOUTH', road_name: 'Mathura Road Bottleneck', capacity: 800, flow: 800, residual: 0, is_saturated: true, utilization_pct: 100 },
 ];
 
 const mockNodes: GraphNode[] = [

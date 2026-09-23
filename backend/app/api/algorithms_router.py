@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import Dict, Any
 
 from app.database.connection import get_db
-from app.database.models import Customer, Package, GraphNode, GraphEdge
+from app.database.models import Customer, Package, Vehicle, GraphNode, GraphEdge, Zone
 from app.database.schemas import (
     KMPRequest, KnapsackRequest, GrahamScanRequest,
     FloydWarshallRequest, EdmondsKarpRequest
@@ -25,39 +25,88 @@ def run_kmp(req: KMPRequest, db: Session = Depends(get_db)):
     if req.text:
         text_to_search = req.text
         kmp_result = kmp_search(text_to_search, pattern)
-        matching_customers = []
-    else:
-        # Search across customer names and addresses
-        customers = db.query(Customer).all()
-        matching_customers = []
-        total_comparisons = 0
+        return kmp_result
 
-        # Run KMP search against combined text for each customer
-        for c in customers:
-            target_str = f"{c.name} - {c.address}"
-            res = kmp_search(target_str.lower(), pattern.lower())
-            total_comparisons += res["comparisons"]
-            if res["matches"]:
-                matching_customers.append({
-                    "customer": {
-                        "id": c.id,
-                        "name": c.name,
-                        "address": c.address,
-                        "latitude": c.latitude,
-                        "longitude": c.longitude,
-                        "priority": c.priority
-                    },
-                    "matches": res["matches"],
-                    "matched_text": target_str
-                })
+    customers = db.query(Customer).all()
+    packages = db.query(Package).all()
+    vehicles = db.query(Vehicle).all()
+    zones = db.query(Zone).all()
 
-        # Generate demonstrative single KMP execution detail for visualization panel
-        sample_text = customers[0].name + " " + customers[0].address if customers else "Apex Electronics Ltd Connaught Place"
-        kmp_result = kmp_search(sample_text, pattern)
-        kmp_result["matching_customers"] = matching_customers
-        kmp_result["total_customers_scanned"] = len(customers)
-        kmp_result["total_comparisons_all_customers"] = total_comparisons
+    matching_customers = []
+    matching_packages = []
+    matching_vehicles = []
+    matching_zones = []
+    total_comparisons = 0
+    needle = pattern.lower()
 
+    for c in customers:
+        target_str = f"{c.name} {c.address} {c.zone_id or ''} {c.id}"
+        res = kmp_search(target_str.lower(), needle)
+        total_comparisons += res["comparisons"]
+        if res["matches"]:
+            matching_customers.append({
+                "customer": {
+                    "id": c.id,
+                    "name": c.name,
+                    "address": c.address,
+                    "latitude": c.latitude,
+                    "longitude": c.longitude,
+                    "priority": c.priority,
+                    "zone_id": c.zone_id,
+                },
+                "matches": res["matches"],
+                "matched_text": target_str
+            })
+
+    for p in packages:
+        target_str = f"{p.id} {p.tracking_number} {p.customer_id} {p.status}"
+        res = kmp_search(target_str.lower(), needle)
+        total_comparisons += res["comparisons"]
+        if res["matches"]:
+            matching_packages.append({
+                "id": p.id,
+                "tracking_number": p.tracking_number,
+                "customer_id": p.customer_id,
+                "status": p.status,
+                "priority": p.priority,
+                "matched_text": target_str,
+            })
+
+    for v in vehicles:
+        target_str = f"{v.id} {v.vehicle_number} {v.driver_name} {v.status}"
+        res = kmp_search(target_str.lower(), needle)
+        total_comparisons += res["comparisons"]
+        if res["matches"]:
+            matching_vehicles.append({
+                "id": v.id,
+                "vehicle_number": v.vehicle_number,
+                "driver_name": v.driver_name,
+                "status": v.status,
+                "matched_text": target_str,
+            })
+
+    for z in zones:
+        target_str = f"{z.id} {z.name}"
+        res = kmp_search(target_str.lower(), needle)
+        total_comparisons += res["comparisons"]
+        if res["matches"]:
+            matching_zones.append({"id": z.id, "name": z.name, "matched_text": target_str})
+
+    sample_source = matching_customers[0]["matched_text"] if matching_customers else (
+        (customers[0].name + " " + customers[0].address) if customers else
+        "Apollo Medical Center Mathura Road Hospital Connaught Place MG Road"
+    )
+    kmp_result = kmp_search(sample_source.lower(), needle)
+    kmp_result["matching_customers"] = matching_customers
+    kmp_result["matching_packages"] = matching_packages
+    kmp_result["matching_vehicles"] = matching_vehicles
+    kmp_result["matching_zones"] = matching_zones
+    kmp_result["total_customers_scanned"] = len(customers)
+    kmp_result["total_records_scanned"] = len(customers) + len(packages) + len(vehicles) + len(zones)
+    kmp_result["total_comparisons_all_customers"] = total_comparisons
+    kmp_result["hit_count"] = (
+        len(matching_customers) + len(matching_packages) + len(matching_vehicles) + len(matching_zones)
+    )
     return kmp_result
 
 

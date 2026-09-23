@@ -2,21 +2,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-from app.database.connection import engine, Base, SessionLocal
-from app.database.seed_data import seed_database
+from app.database.bootstrap import init_db
 from app.api.data_router import router as data_router
 from app.api.algorithms_router import router as algorithms_router
 from app.api.recommendations_router import router as recommendations_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Initialize database tables and seed data on startup
-    Base.metadata.create_all(bind=engine)
-    db = SessionLocal()
-    try:
-        seed_database(db)
-    finally:
-        db.close()
+    init_db()
     yield
 
 app = FastAPI(

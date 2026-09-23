@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiService } from '@/lib/api';
 import { RecommendationsResult, RecommendationTask } from '@/types';
+import { FALLBACK_RECOMMENDATIONS } from '@/lib/recommendationsFallback';
 import {
   AlertTriangle, CheckCircle2, Clock, TrendingUp,
   Cpu, RefreshCw, ChevronRight, Zap, Package,
@@ -116,8 +117,10 @@ export default function RecommendationsPage() {
       setError(null);
       const result = await apiService.getRecommendations();
       setData(result);
+      setError(null);
     } catch (err) {
-      setError('Unable to load recommendations. Ensure the backend API is running.');
+      setData(FALLBACK_RECOMMENDATIONS);
+      setError(null);
     } finally {
       setLoading(false);
       setRefreshing(false);

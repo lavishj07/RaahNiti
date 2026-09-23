@@ -40,7 +40,7 @@ export const apiService = {
   runKMP: (pattern: string, text?: string) =>
     fetchJson<KMPResult>('/api/algorithms/kmp', {
       method: 'POST',
-      body: JSON.stringify({ pattern, text }),
+      body: JSON.stringify({ pattern, text: text ?? null }),
     }),
 
   runKnapsack: (capacity: number, items?: any[]) =>

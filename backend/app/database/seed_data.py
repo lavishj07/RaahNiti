@@ -8,8 +8,10 @@ def seed_database(db: Session):
     Covers all operational scenarios: peak load, delayed vehicles, bottleneck networks,
     urgent deliveries, idle fleet, and zone boundary edge cases.
     """
-    if db.query(Warehouse).first():
-        return  # Database already seeded
+    already_seeded = db.query(Warehouse).first() is not None
+    if already_seeded:
+        _upsert_extra_search_records(db)
+        return
 
     # ─── 1. Warehouse ─────────────────────────────────────────────────
     warehouse = Warehouse(
@@ -67,6 +69,16 @@ def seed_database(db: Session):
         {"id": "C30", "name": "IGI Cargo Terminal",           "address": "NH-48, Near T3, New Delhi",                       "lat": 28.5620, "lng": 77.0930, "priority": 5, "zone": "Z_CENTRAL"},
         {"id": "C31", "name": "Mahipalpur Warehouse Zone",    "address": "NH-48, Mahipalpur, New Delhi",                    "lat": 28.5430, "lng": 77.1050, "priority": 4, "zone": "Z_CENTRAL"},
         {"id": "C32", "name": "Palam Tech Market",            "address": "Palam Village Road, Dwarka, New Delhi",           "lat": 28.5920, "lng": 77.0710, "priority": 3, "zone": "Z_CENTRAL"},
+
+        # Extra KMP-searchable landmarks (hospitals, MG Road, Connaught, tracking aliases)
+        {"id": "C33", "name": "Safdarjung Hospital Pharmacy", "address": "Ansari Nagar, Safdarjung Hospital, New Delhi",    "lat": 28.5680, "lng": 77.2080, "priority": 5, "zone": "Z_SOUTH"},
+        {"id": "C34", "name": "Max Super Speciality Hospital","address": "Press Enclave Road, Saket, New Delhi",            "lat": 28.5275, "lng": 77.2115, "priority": 5, "zone": "Z_SOUTH"},
+        {"id": "C35", "name": "Fortis Hospital Noida",        "address": "B-22, Sector 62, Noida",                          "lat": 28.6205, "lng": 77.3640, "priority": 5, "zone": "Z_EAST"},
+        {"id": "C36", "name": "MG Road Electronics Bazaar",   "address": "123 MG Road, Gurgaon Sector 14",                  "lat": 28.4740, "lng": 77.0800, "priority": 3, "zone": "Z_WEST"},
+        {"id": "C37", "name": "Connaught Place Flagship Store","address": "A-12 Inner Circle, Connaught Place, New Delhi",  "lat": 28.6328, "lng": 77.2197, "priority": 4, "zone": "Z_NORTH"},
+        {"id": "C38", "name": "AIIMS Trauma Centre",          "address": "Ansari Nagar East, AIIMS, New Delhi",             "lat": 28.5665, "lng": 77.2110, "priority": 5, "zone": "Z_SOUTH"},
+        {"id": "C39", "name": "Dwarka Sector 21 Metro Depot", "address": "Sector 21, Dwarka Expressway, New Delhi",         "lat": 28.5528, "lng": 77.0580, "priority": 3, "zone": "Z_WEST"},
+        {"id": "C40", "name": "Cyber Hub Gurugram Retail",    "address": "DLF Cyber Hub, Cyber City, Gurugram",             "lat": 28.4948, "lng": 77.0885, "priority": 4, "zone": "Z_WEST"},
     ]
 
     for c in customers_data:
@@ -118,6 +130,12 @@ def seed_database(db: Session):
         # Already delivered (history)
         {"id": "PKG-108", "tn": "RN-98221", "cid": "C08", "w": 15.0,  "v": 1100.0, "p": 3, "st": "DELIVERED", "vid": "V01"},
         {"id": "PKG-116", "tn": "RN-98229", "cid": "C16", "w": 9.5,   "v": 1300.0, "p": 3, "st": "DELIVERED", "vid": "V01"},
+        {"id": "PKG-133", "tn": "RN-HOSP-01", "cid": "C33", "w": 7.5, "v": 4100.0, "p": 5, "st": "PENDING", "vid": None},
+        {"id": "PKG-134", "tn": "RN-HOSP-02", "cid": "C34", "w": 6.0, "v": 3900.0, "p": 5, "st": "PENDING", "vid": None},
+        {"id": "PKG-135", "tn": "RN-HOSP-03", "cid": "C38", "w": 4.8, "v": 5200.0, "p": 5, "st": "PENDING", "vid": None},
+        {"id": "PKG-136", "tn": "RN-MG-4401", "cid": "C36", "w": 21.0, "v": 1450.0, "p": 3, "st": "PENDING", "vid": None},
+        {"id": "PKG-137", "tn": "RN-CP-1188", "cid": "C37", "w": 13.0, "v": 2200.0, "p": 4, "st": "PENDING", "vid": None},
+        {"id": "PKG-138", "tn": "RN-CYBER-9", "cid": "C40", "w": 16.5, "v": 2600.0, "p": 4, "st": "PENDING", "vid": None},
     ]
 
     for p in packages_data:
@@ -288,4 +306,42 @@ def seed_database(db: Session):
             customer_count=z["count"]
         ))
 
+    db.commit()
+
+
+def _upsert_extra_search_records(db: Session):
+    """Add KMP-searchable hospitals / landmarks if this DB was seeded before they existed."""
+    extra_customers = [
+        {"id": "C33", "name": "Safdarjung Hospital Pharmacy", "address": "Ansari Nagar, Safdarjung Hospital, New Delhi", "lat": 28.5680, "lng": 77.2080, "priority": 5, "zone": "Z_SOUTH"},
+        {"id": "C34", "name": "Max Super Speciality Hospital", "address": "Press Enclave Road, Saket, New Delhi", "lat": 28.5275, "lng": 77.2115, "priority": 5, "zone": "Z_SOUTH"},
+        {"id": "C35", "name": "Fortis Hospital Noida", "address": "B-22, Sector 62, Noida", "lat": 28.6205, "lng": 77.3640, "priority": 5, "zone": "Z_EAST"},
+        {"id": "C36", "name": "MG Road Electronics Bazaar", "address": "123 MG Road, Gurgaon Sector 14", "lat": 28.4740, "lng": 77.0800, "priority": 3, "zone": "Z_WEST"},
+        {"id": "C37", "name": "Connaught Place Flagship Store", "address": "A-12 Inner Circle, Connaught Place, New Delhi", "lat": 28.6328, "lng": 77.2197, "priority": 4, "zone": "Z_NORTH"},
+        {"id": "C38", "name": "AIIMS Trauma Centre", "address": "Ansari Nagar East, AIIMS, New Delhi", "lat": 28.5665, "lng": 77.2110, "priority": 5, "zone": "Z_SOUTH"},
+        {"id": "C39", "name": "Dwarka Sector 21 Metro Depot", "address": "Sector 21, Dwarka Expressway, New Delhi", "lat": 28.5528, "lng": 77.0580, "priority": 3, "zone": "Z_WEST"},
+        {"id": "C40", "name": "Cyber Hub Gurugram Retail", "address": "DLF Cyber Hub, Cyber City, Gurugram", "lat": 28.4948, "lng": 77.0885, "priority": 4, "zone": "Z_WEST"},
+    ]
+    extra_packages = [
+        {"id": "PKG-133", "tn": "RN-HOSP-01", "cid": "C33", "w": 7.5, "v": 4100.0, "p": 5, "st": "PENDING", "vid": None},
+        {"id": "PKG-134", "tn": "RN-HOSP-02", "cid": "C34", "w": 6.0, "v": 3900.0, "p": 5, "st": "PENDING", "vid": None},
+        {"id": "PKG-135", "tn": "RN-HOSP-03", "cid": "C38", "w": 4.8, "v": 5200.0, "p": 5, "st": "PENDING", "vid": None},
+        {"id": "PKG-136", "tn": "RN-MG-4401", "cid": "C36", "w": 21.0, "v": 1450.0, "p": 3, "st": "PENDING", "vid": None},
+        {"id": "PKG-137", "tn": "RN-CP-1188", "cid": "C37", "w": 13.0, "v": 2200.0, "p": 4, "st": "PENDING", "vid": None},
+        {"id": "PKG-138", "tn": "RN-CYBER-9", "cid": "C40", "w": 16.5, "v": 2600.0, "p": 4, "st": "PENDING", "vid": None},
+    ]
+    existing_cids = {row[0] for row in db.query(Customer.id).all()}
+    for c in extra_customers:
+        if c["id"] not in existing_cids:
+            db.add(Customer(
+                id=c["id"], name=c["name"], address=c["address"],
+                latitude=c["lat"], longitude=c["lng"], priority=c["priority"], zone_id=c["zone"]
+            ))
+    existing_pids = {row[0] for row in db.query(Package.id).all()}
+    for p in extra_packages:
+        if p["id"] not in existing_pids:
+            db.add(Package(
+                id=p["id"], tracking_number=p["tn"], customer_id=p["cid"],
+                weight_kg=p["w"], value_usd=p["v"], priority=p["p"],
+                status=p["st"], assigned_vehicle_id=p["vid"]
+            ))
     db.commit()

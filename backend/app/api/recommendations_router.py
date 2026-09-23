@@ -14,6 +14,7 @@ router = APIRouter(prefix="/api/recommendations", tags=["recommendations"])
 
 
 @router.get("")
+@router.get("/")
 def get_recommendations(db: Session = Depends(get_db)):
     """
     Synthesize results from all 5 algorithms to generate prioritized

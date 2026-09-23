@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List, Dict, Any
 
@@ -14,6 +14,8 @@ router = APIRouter(prefix="/api", tags=["data"])
 @router.get("/warehouse", response_model=WarehouseSchema)
 def get_warehouse(db: Session = Depends(get_db)):
     wh = db.query(Warehouse).first()
+    if not wh:
+        raise HTTPException(status_code=404, detail="Warehouse not seeded")
     return wh
 
 @router.get("/customers", response_model=List[CustomerSchema])
